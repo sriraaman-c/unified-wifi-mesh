@@ -184,8 +184,8 @@ int dm_ssid_2_vid_map_t::sync_db(db_client_t& db_client, void *ctx)
     while (db_client.next_result(ctx)) {
 	memset(&info, 0, sizeof(em_ssid_2_vid_map_info_t));
 
-	db_client.get_string(ctx, info.id, 1);
-	db_client.get_string(ctx, info.ssid, 2);
+	db_client.get_string(ctx, info.id, sizeof(info.id), 1);
+	db_client.get_string(ctx, info.ssid, sizeof(info.ssid), 2);
         info.vid = static_cast<short unsigned int>(db_client.get_number(ctx, 3));
         
 	update_list(dm_ssid_2_vid_map_t(&info));

@@ -293,7 +293,7 @@ bool dm_sta_list_t::search_db(db_client_t& db_client, void *ctx, void *key)
     mac_addr_str_t  mac;
 
     while (db_client.next_result(ctx)) {
-        db_client.get_string(ctx, mac, 1);
+        db_client.get_string(ctx, mac, sizeof(mac), 1);
 
         if (strncmp(mac, static_cast<char *>(key), strlen(static_cast<char *>(key))) == 0) {
             return true;
@@ -320,13 +320,13 @@ bool dm_sta_list_t::compare_db(db_client_t& db_client, const dm_sta_t& sta)
     while (db_client.next_result(ctx)) {
         memset(&info, 0, sizeof(em_sta_info_t));
 
-        db_client.get_string(ctx, mac, 1);
+        db_client.get_string(ctx, mac, sizeof(mac), 1);
         dm_easy_mesh_t::string_to_macbytes(mac, info.id);
 
-        db_client.get_string(ctx, mac, 2);
+        db_client.get_string(ctx, mac, sizeof(mac), 2);
         dm_easy_mesh_t::string_to_macbytes(mac, info.bssid);
 
-        db_client.get_string(ctx, mac, 3);
+        db_client.get_string(ctx, mac, sizeof(mac), 3);
         dm_easy_mesh_t::string_to_macbytes(mac, info.radiomac);
 
         info.associated = db_client.get_number(ctx, 4);
@@ -348,7 +348,7 @@ bool dm_sta_list_t::compare_db(db_client_t& db_client, const dm_sta_t& sta)
         info.errors_rx = static_cast<unsigned char> (db_client.get_number(ctx, 20));
         info.frame_body_len = static_cast<unsigned char> (db_client.get_number(ctx, 21));
 
-        db_client.get_string(ctx, frame_body, 22);
+        db_client.get_string(ctx, frame_body, sizeof(frame_body), 22);
         dm_easy_mesh_t::unhex(static_cast<unsigned int>(strlen(frame_body)), frame_body, EM_MAX_FRAME_BODY_LEN, info.frame_body);
 
         if (memcmp(static_cast<const void*>(&sta.m_sta_info), static_cast<const void*>(&info), sizeof(em_sta_info_t)) == 0) {
@@ -369,13 +369,13 @@ int dm_sta_list_t::sync_db(db_client_t& db_client, void *ctx)
     while (db_client.next_result(ctx)) {
         memset(&info, 0, sizeof(em_sta_info_t));
 
-        db_client.get_string(ctx, mac, 1);
+        db_client.get_string(ctx, mac, sizeof(mac), 1);
         dm_easy_mesh_t::string_to_macbytes(mac, info.id);
 
-        db_client.get_string(ctx, mac, 2);
+        db_client.get_string(ctx, mac, sizeof(mac), 2);
         dm_easy_mesh_t::string_to_macbytes(mac, info.bssid);
 
-        db_client.get_string(ctx, mac, 3);
+        db_client.get_string(ctx, mac, sizeof(mac), 3);
         dm_easy_mesh_t::string_to_macbytes(mac, info.radiomac);
 
         info.associated = db_client.get_number(ctx, 4);
@@ -397,7 +397,7 @@ int dm_sta_list_t::sync_db(db_client_t& db_client, void *ctx)
         info.errors_rx = static_cast<unsigned int> (db_client.get_number(ctx, 20));
         info.frame_body_len = static_cast<unsigned int> (db_client.get_number(ctx, 21));
 
-        db_client.get_string(ctx, frame_body, 22);
+        db_client.get_string(ctx, frame_body, sizeof(frame_body), 22);
         dm_easy_mesh_t::unhex(static_cast<unsigned int>(strlen(frame_body)), frame_body, EM_MAX_FRAME_BODY_LEN, info.frame_body);
 
         update_list(dm_sta_t(&info), dm_orch_type_db_insert);

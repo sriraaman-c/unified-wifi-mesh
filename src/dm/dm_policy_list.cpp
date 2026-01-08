@@ -310,7 +310,7 @@ bool dm_policy_list_t::search_db(db_client_t& db_client, void *ctx, void *key)
     em_long_string_t  str;
 
     while (db_client.next_result(ctx)) {
-        db_client.get_string(ctx, str, 1);
+        db_client.get_string(ctx, str, sizeof(str), 1);
 		//printf("%s:%d: Comparing source: %s target: %s\n", __func__, __LINE__, str, (char *)key);
 
         if (strncmp(str, static_cast<char *>(key), strlen(static_cast<char *>(key))) == 0) {
@@ -334,13 +334,13 @@ int dm_policy_list_t::sync_db(db_client_t& db_client, void *ctx)
     while (db_client.next_result(ctx)) {
         memset(&policy, 0, sizeof(em_policy_t));
 
-        db_client.get_string(ctx, str, 1);
+        db_client.get_string(ctx, str, sizeof(str), 1);
 		dm_policy_t::parse_dev_radio_mac_from_key(str, &id);
 		memcpy(policy.id.dev_mac, id.dev_mac, sizeof(mac_address_t));
 		memcpy(policy.id.radio_mac, id.radio_mac, sizeof(mac_address_t));
 		policy.id.type = id.type;
 
-		db_client.get_string(ctx, sta_mac_list_str, 2);
+		db_client.get_string(ctx, sta_mac_list_str, sizeof(sta_mac_list_str), 2);
 		for (i = 0; i < EM_MAX_STA_PER_STEER_POLICY; i++) {
             token_parts[i] = sta_mac_str[i];
         }
@@ -358,14 +358,14 @@ int dm_policy_list_t::sync_db(db_client_t& db_client, void *ctx)
 		policy.sta_traffic_stats = db_client.get_number(ctx, 8);
 		policy.sta_link_metric = db_client.get_number(ctx, 9);
 		policy.sta_status = db_client.get_number(ctx, 10);
-		db_client.get_string(ctx, policy.managed_sta_marker, 11);
+		db_client.get_string(ctx, policy.managed_sta_marker, sizeof(policy.managed_sta_marker), 11);
 		policy.independent_scan_report = db_client.get_number(ctx, 12);
 		policy.profile_1_sta_disallowed = db_client.get_number(ctx, 13);
 		policy.profile_2_sta_disallowed = db_client.get_number(ctx, 14);
         policy.def_8021q_settings.primary_vid = static_cast<unsigned short>(db_client.get_number(ctx, 15));
         policy.def_8021q_settings.default_pcp = static_cast<unsigned char>(db_client.get_number(ctx, 16));
         for (i = 0; i < em_haul_type_max; i++) {
-            db_client.get_string(ctx, policy.traffic_separ.ssid_info[i].ssid, (17 + (2*i)));
+            db_client.get_string(ctx, policy.traffic_separ.ssid_info[i].ssid, sizeof(policy.traffic_separ.ssid_info[i].ssid), (17 + (2*i)));
             policy.traffic_separ.ssid_info[i].vlan_id = static_cast<unsigned char>(db_client.get_number(ctx, (18 + (2*i))));
         }
         

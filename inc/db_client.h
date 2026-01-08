@@ -19,6 +19,8 @@
 #ifndef DB_CLIENT_H
 #define DB_CLIENT_H
 
+#include <stddef.h>
+
 #if defined(OPENWRT_BUILD) || defined(_PLATFORM_BANANAPI_R4_)
 // MariaDB C client header for cross compiled OpenWRT
 #include <mysql/mysql.h>
@@ -117,14 +119,16 @@
 	  * This function extracts a string from a specified column in the result context and stores it in the provided buffer.
 	  *
 	  * @param[in] ctx Result context from which the string is retrieved.
-	  * @param[out] res Buffer to store the retrieved string. The buffer must be pre-allocated and large enough to hold the string.
+	  * @param[out] res Buffer to store the retrieved string.
+	  * @param[in]  res_len Length of the output buffer in bytes (including NUL).
 	  * @param[in] col Column index from which to retrieve the string (1-based).
 	  *
 	  * @returns Pointer to the result buffer containing the string, or NULL on error.
 	  *
-	  * @note Ensure the buffer size is sufficient to store the retrieved string to avoid buffer overflow.
+	  * @note The output will be NUL-terminated. If the DB value is longer than the buffer,
+	  *       it will be truncated safely.
 	  */
-	 char *get_string(void *ctx, char *res, unsigned int col);
+	 char *get_string(void *ctx, char *res, size_t res_len, unsigned int col);
 
 
 	 /**!

@@ -217,7 +217,7 @@ int dm_ieee_1905_security_list_t::sync_db(db_client_t& db_client, void *ctx)
     while (db_client.next_result(ctx)) {
 		memset(&info, 0, sizeof(em_ieee_1905_security_info_t));
 
-		db_client.get_string(ctx, mac, 1);
+		db_client.get_string(ctx, mac, sizeof(mac), 1);
         dm_easy_mesh_t::string_to_macbytes(mac, info.id);
 
         info.sec_cap.onboarding_proto = static_cast<unsigned char> (db_client.get_number(ctx, 2));

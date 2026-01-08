@@ -195,7 +195,7 @@ bool dm_network_list_t::search_db(db_client_t& db_client, void *ctx, void *key)
     em_string_t net_id;
 
     while (db_client.next_result(ctx)) {
-        db_client.get_string(ctx, net_id, 1);
+        db_client.get_string(ctx, net_id, sizeof(net_id), 1);
 
         if (strncmp(net_id, static_cast<char *> (key), strlen(static_cast<char *> (key))) == 0) {
             return true;
@@ -218,11 +218,11 @@ int dm_network_list_t::sync_db(db_client_t& db_client, void *ctx)
 
     // there is only one row in network
     while (db_client.next_result(ctx)) {
-		db_client.get_string(ctx, info.id, 1);
-		db_client.get_string(ctx, mac, 2);
+		db_client.get_string(ctx, info.id, sizeof(info.id), 1);
+		db_client.get_string(ctx, mac, sizeof(mac), 2);
 		dm_easy_mesh_t::string_to_macbytes(mac, info.ctrl_id.mac);
 
-		db_client.get_string(ctx, mac, 3);
+		db_client.get_string(ctx, mac, sizeof(mac), 3);
 		dm_easy_mesh_t::string_to_macbytes(mac, info.colocated_agent_id.mac);
 
 		info.media = static_cast<em_media_type_t> (db_client.get_number(ctx, 4));

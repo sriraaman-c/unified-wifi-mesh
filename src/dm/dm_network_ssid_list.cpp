@@ -369,7 +369,7 @@ bool dm_network_ssid_list_t::search_db(db_client_t& db_client, void *ctx, void *
     em_long_string_t id;
 
     while (db_client.next_result(ctx)) {
-        db_client.get_string(ctx, id, 1);
+        db_client.get_string(ctx, id, sizeof(id), 1);
 
         if (strncmp(id, static_cast<char *> (key), strlen(static_cast<char *> (key))) == 0) {
             return true;
@@ -392,10 +392,10 @@ int dm_network_ssid_list_t::sync_db(db_client_t& db_client, void *ctx)
     while (db_client.next_result(ctx)) {
 		memset(&info, 0, sizeof(em_network_ssid_info_t));
 
-		db_client.get_string(ctx, info.id, 1);
-		db_client.get_string(ctx, info.ssid, 2);
-        db_client.get_string(ctx, info.pass_phrase, 3);
-		db_client.get_string(ctx, str, 4);
+		db_client.get_string(ctx, info.id, sizeof(info.id), 1);
+		db_client.get_string(ctx, info.ssid, sizeof(info.ssid), 2);
+        db_client.get_string(ctx, info.pass_phrase, sizeof(info.pass_phrase), 3);
+		db_client.get_string(ctx, str, sizeof(str), 4);
 		for (i = 0; i < EM_MAX_BANDS; i++) {
 			token_parts[i] = info.band[i];
 		}
@@ -406,7 +406,7 @@ int dm_network_ssid_list_t::sync_db(db_client_t& db_client, void *ctx)
 
         info.enable = db_client.get_number(ctx, 5);
 
-		db_client.get_string(ctx, str, 6);
+		db_client.get_string(ctx, str, sizeof(str), 6);
 		for (i = 0; i < EM_MAX_AKMS; i++) {
 			token_parts[i] = info.akm[i];
 		}
@@ -416,14 +416,14 @@ int dm_network_ssid_list_t::sync_db(db_client_t& db_client, void *ctx)
 		}
 
 
-		db_client.get_string(ctx, info.suite_select, 7);
+		db_client.get_string(ctx, info.suite_select, sizeof(info.suite_select), 7);
 		info.advertisement = db_client.get_number(ctx, 8);
-		db_client.get_string(ctx, info.mfp, 9);
+		db_client.get_string(ctx, info.mfp, sizeof(info.mfp), 9);
 
-		db_client.get_string(ctx, mac, 10);
+		db_client.get_string(ctx, mac, sizeof(mac), 10);
 		dm_easy_mesh_t::string_to_macbytes(mac, info.mobility_domain);
 
-		db_client.get_string(ctx, str, 11);
+		db_client.get_string(ctx, str, sizeof(str), 11);
 		for (i = 0; i < EM_MAX_HAUL_TYPES; i++) {
 			token_parts[i] = haul_type[i];
 		}

@@ -280,7 +280,7 @@ bool dm_scan_result_list_t::search_db(db_client_t& db_client, void *ctx, void *k
     em_long_string_t  str;
 
     while (db_client.next_result(ctx)) {
-        db_client.get_string(ctx, str, 1);
+        db_client.get_string(ctx, str, sizeof(str), 1);
 		//printf("%s:%d: Comparing source: %s target: %s\n", __func__, __LINE__, str, (char *)key);
 
 		if (strncmp(str, static_cast<char *>(key), strlen(static_cast<char *>(key))) == 0) {
@@ -300,7 +300,7 @@ int dm_scan_result_list_t::sync_db(db_client_t& db_client, void *ctx)
     while (db_client.next_result(ctx)) {
         memset(&scan_result, 0, sizeof(em_scan_result_t));
 
-        db_client.get_string(ctx, str, 1);
+        db_client.get_string(ctx, str, sizeof(str), 1);
 		
 		dm_scan_result_t::parse_scan_result_id_from_key(str, &id);
 		memcpy(scan_result.id.net_id, id.net_id, sizeof(em_long_string_t));
@@ -313,16 +313,16 @@ int dm_scan_result_list_t::sync_db(db_client_t& db_client, void *ctx)
 
 		scan_result.scan_status = static_cast<unsigned char>(db_client.get_number(ctx, 2));
 		
-		db_client.get_string(ctx, str, 3);
+		db_client.get_string(ctx, str, sizeof(str), 3);
 		strncpy(scan_result.timestamp, str, sizeof(em_long_string_t));
 
 		scan_result.util = static_cast<unsigned char>(db_client.get_number(ctx, 4));
 		scan_result.noise = static_cast<unsigned char>(db_client.get_number(ctx, 5));
 
-        db_client.get_string(ctx, str, 6);
+        db_client.get_string(ctx, str, sizeof(str), 6);
 		dm_easy_mesh_t::string_to_macbytes(str, scan_result.neighbor[scan_result.num_neighbors].bssid);
 
-        db_client.get_string(ctx, str, 7);
+        db_client.get_string(ctx, str, sizeof(str), 7);
 		snprintf(scan_result.neighbor[scan_result.num_neighbors].ssid, sizeof(ssid_t), "%.*s", static_cast<int>(sizeof(ssid_t) - 1), str);
 		scan_result.neighbor[scan_result.num_neighbors].signal_strength = static_cast<signed char>(db_client.get_number(ctx, 8));
 		scan_result.neighbor[scan_result.num_neighbors].bandwidth = static_cast<wifi_channelBandwidth_t>(db_client.get_number(ctx, 9));

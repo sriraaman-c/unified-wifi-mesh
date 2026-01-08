@@ -360,7 +360,7 @@ int db_easy_mesh_t::load_table(db_client_t& db_client)
     ctx = db_client.execute(query);
 
     while (db_client.next_result(ctx)) {
-        db_client.get_string(ctx, result, 1);
+        db_client.get_string(ctx, result, sizeof(result), 1);
         if (strncmp(result, m_table_name, strlen(m_table_name)) == 0) {
             present = true;
         }

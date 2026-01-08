@@ -101,13 +101,22 @@
      return true;
  }
 
- char *db_client_t::get_string(void *ctx, char *str, unsigned int col)
+ char *db_client_t::get_string(void *ctx, char *str, size_t str_len, unsigned int col)
  {
-     if (ctx == NULL) {
+     if (ctx == NULL || str == NULL || str_len == 0) {
          return NULL;
      }
 
      result_context_t *res_ctx = static_cast<result_context_t *>(ctx);
+
+     if (col == 0) {
+         return NULL;
+     }
+
+     const unsigned int num_fields = mysql_num_fields(res_ctx->result);
+     if (col > num_fields) {
+         return NULL;
+     }
 
      if (res_ctx->row == NULL || res_ctx->row[col - 1] == NULL) {
          return NULL;
@@ -119,7 +128,10 @@
          return NULL;
      }
 
-     snprintf(str, lengths[col - 1] + 1, "%s", res_ctx->row[col - 1]);
+     const unsigned long src_len = lengths[col - 1];
+     const size_t copy_len = (src_len < (str_len - 1)) ? static_cast<size_t>(src_len) : (str_len - 1);
+     memcpy(str, res_ctx->row[col - 1], copy_len);
+     str[copy_len] = '\0';
      return str;
  }
 

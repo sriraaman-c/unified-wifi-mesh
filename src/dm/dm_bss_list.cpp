@@ -266,7 +266,7 @@ bool dm_bss_list_t::search_db(db_client_t& db_client, void *ctx, void *key)
     em_long_string_t    str;
 
     while (db_client.next_result(ctx)) {
-        db_client.get_string(ctx, str, 1);
+        db_client.get_string(ctx, str, sizeof(str), 1);
 
         if (strncmp(str, static_cast<char *> (key), strlen(static_cast<char *> (key))) == 0) {
             return true;
@@ -288,30 +288,30 @@ int dm_bss_list_t::sync_db(db_client_t& db_client, void *ctx)
     while (db_client.next_result(ctx)) {
         memset(&info, 0, sizeof(em_bss_info_t));
 
-        db_client.get_string(ctx, str, 1);
+        db_client.get_string(ctx, str, sizeof(str), 1);
 		dm_bss_t::parse_bss_id_from_key(str, &info.id);
 
-        db_client.get_string(ctx, mac, 2);
+        db_client.get_string(ctx, mac, sizeof(mac), 2);
         dm_easy_mesh_t::string_to_macbytes(mac, info.bssid.mac);
 
-        db_client.get_string(ctx, mac, 3);
+        db_client.get_string(ctx, mac, sizeof(mac), 3);
         dm_easy_mesh_t::string_to_macbytes(mac, info.ruid.mac);
 
-        db_client.get_string(ctx, info.ssid, 4);
+        db_client.get_string(ctx, info.ssid, sizeof(info.ssid), 4);
         info.enabled = db_client.get_number(ctx, 5);
 
-        db_client.get_string(ctx, info.est_svc_params_be, 6);
-        db_client.get_string(ctx, info.est_svc_params_bk, 7);
-        db_client.get_string(ctx, info.est_svc_params_vi, 8);
-        db_client.get_string(ctx, info.est_svc_params_vo, 9);
+        db_client.get_string(ctx, info.est_svc_params_be, sizeof(info.est_svc_params_be), 6);
+        db_client.get_string(ctx, info.est_svc_params_bk, sizeof(info.est_svc_params_bk), 7);
+        db_client.get_string(ctx, info.est_svc_params_vi, sizeof(info.est_svc_params_vi), 8);
+        db_client.get_string(ctx, info.est_svc_params_vo, sizeof(info.est_svc_params_vo), 9);
 
-        db_client.get_string(ctx, str, 10);
+        db_client.get_string(ctx, str, sizeof(str), 10);
         for (i = 0; i < EM_MAX_AKMS; i++) {
             token_parts[i] = info.fronthaul_akm[i];
         }
         info.num_fronthaul_akms = static_cast<unsigned char> (get_strings_by_token(str, ',', EM_MAX_AKMS, token_parts));
 
-        db_client.get_string(ctx, str, 11);
+        db_client.get_string(ctx, str, sizeof(str), 11);
 
         for (i = 0; i < EM_MAX_AKMS; i++) {
             token_parts[i] = info.backhaul_akm[i];

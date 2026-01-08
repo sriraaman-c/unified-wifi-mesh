@@ -190,7 +190,7 @@ bool dm_neighbor_list_t::search_db(db_client_t& db_client, void *ctx, void *key)
     em_long_string_t    str;
 
     while (db_client.next_result(ctx)) {
-        db_client.get_string(ctx, str, 1);
+        db_client.get_string(ctx, str, sizeof(str), 1);
 
         if (strncmp(str, static_cast<char *> (key), strlen(static_cast<char *> (key))) == 0) {
             return true;
@@ -210,14 +210,14 @@ int dm_neighbor_list_t::sync_db(db_client_t& db_client, void *ctx)
     while (db_client.next_result(ctx)) {
         memset(&info, 0, sizeof(em_neighbor_info_t));
 
-        db_client.get_string(ctx, str, 1);
+        db_client.get_string(ctx, str, sizeof(str), 1);
 		dm_easy_mesh_t::string_to_macbytes(str, info.nbr);
 
 		info.pos_x = static_cast<float> (db_client.get_number(ctx, 2));
 		info.pos_y = static_cast<float> (db_client.get_number(ctx, 3));
 		info.pos_z = static_cast<float> (db_client.get_number(ctx, 4));
         
-		db_client.get_string(ctx, mac, 5);
+		db_client.get_string(ctx, mac, sizeof(mac), 5);
         dm_easy_mesh_t::string_to_macbytes(mac, info.next_hop);
 
         info.num_hops = static_cast<unsigned int> (db_client.get_number(ctx, 6));

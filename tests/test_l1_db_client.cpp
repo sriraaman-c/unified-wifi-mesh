@@ -365,7 +365,7 @@ TEST_F(db_client_crud_Test, GetStringValidColumn) {
     ASSERT_NE(ctx->row, nullptr) << "First row is null — query returned no data";
     // Step 3: Retrieve string from valid column
     char buffer[256] = {0};
-    char* str = dbClient->get_string(result, buffer, 1);
+    char* str = dbClient->get_string(result, buffer, sizeof(buffer), 1);
     ASSERT_NE(str, nullptr);
     std::cout << "Retrieved username: " << str << std::endl;
     // Step 4: Verify string is non-empty
@@ -409,9 +409,7 @@ TEST_F(db_client_crud_Test, GetStringInvalidColumn) {
     ASSERT_NE(ctx->row, nullptr);
     char buffer[256] = {0};
     // Step 3: Attempt to retrieve string from invalid column index
-    EXPECT_DEATH({
-        dbClient->get_string(result, buffer, 0);
-    }, ".*");
+    EXPECT_EQ(dbClient->get_string(result, buffer, sizeof(buffer), 0), nullptr);
     // Cleanup
     free_result(result);
     std::cout << "Exiting GetStringInvalidColumn test" << std::endl;
@@ -438,7 +436,7 @@ TEST_F(db_client_crud_Test, GetStringInvalidColumn) {
  */
 TEST_F(db_client_t_Test, RetrieveStringWithNullResultAndNullContext) {
     std::cout << "Entering RetrieveStringWithNullResultAndNullContext" << std::endl;
-    char* result = dbClient->get_string(nullptr, nullptr, 0);
+    char* result = dbClient->get_string(nullptr, nullptr, 0, 0);
     ASSERT_EQ(result, nullptr);
     std::cout << "Exiting RetrieveStringWithNullResultAndNullContext" << std::endl;
 }

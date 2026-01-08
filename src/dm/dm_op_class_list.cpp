@@ -284,7 +284,7 @@ bool dm_op_class_list_t::search_db(db_client_t& db_client, void *ctx, void *key)
     em_long_string_t  str;
 
     while (db_client.next_result(ctx)) {
-        db_client.get_string(ctx, str, 1);
+        db_client.get_string(ctx, str, sizeof(str), 1);
 		//printf("%s:%d: Comparing source: %s target: %s\n", __func__, __LINE__, str, (char *)key);
 
         if (strncmp(str, static_cast<char *>(key), strlen(static_cast<char *>(key))) == 0) {
@@ -307,12 +307,12 @@ int dm_op_class_list_t::sync_db(db_client_t& db_client, void *ctx)
     while (db_client.next_result(ctx)) {
         memset(&info, 0, sizeof(em_op_class_info_t));
 
-        db_client.get_string(ctx, id, 1);
+        db_client.get_string(ctx, id, sizeof(id), 1);
         dm_op_class_t::parse_op_class_id_from_key(id, &info.id);
         info.op_class = static_cast<short unsigned int>(db_client.get_number(ctx, 2));
         info.channel = static_cast<short unsigned int>(db_client.get_number(ctx, 3));
         
-		db_client.get_string(ctx, str, 4);
+		db_client.get_string(ctx, str, sizeof(str), 4);
 		for (i = 0; i < EM_MAX_CHANNELS_IN_LIST; i++) {
             token_parts[i] = ch_str[i];
         }

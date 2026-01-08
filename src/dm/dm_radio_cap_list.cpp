@@ -200,7 +200,7 @@ int dm_radio_cap_list_t::sync_db(db_client_t& db_client, void *ctx)
     while (db_client.next_result(ctx)) {
 	memset(&info, 0, sizeof(em_radio_cap_info_t));
 
-	db_client.get_string(ctx, mac_str, 1);
+	db_client.get_string(ctx, mac_str, sizeof(mac_str), 1);
 	dm_easy_mesh_t::string_to_macbytes(mac_str, info.ruid.mac);
 
 	//db_client.get_string(ctx, info.ht_cap, 2);
