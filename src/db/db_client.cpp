@@ -19,8 +19,27 @@
  #include <string.h>
  #include <stdlib.h>
  #include <assert.h>
+ #include <errno.h>
  #include "db_client.h"
  #include "em_base.h"
+
+ #ifndef DB_LOG
+ #define DB_LOG(fmt, ...) printf("DB:%s:%d: " fmt "\n", __func__, __LINE__, ##__VA_ARGS__)
+ #endif
+
+ static const char *db_query_preview(const char *q, char *buf, size_t buf_len)
+ {
+     if (!buf || buf_len == 0) {
+         return "";
+     }
+     if (!q) {
+         buf[0] = '\0';
+         return buf;
+     }
+     // Log only a short prefix to avoid huge lines.
+     snprintf(buf, buf_len, "%.*s", static_cast<int>(buf_len - 1), q);
+     return buf;
+ }
 
  // Structure to hold the result set and associated data
  struct result_context_t {
@@ -53,14 +72,43 @@
  void *db_client_t::execute(const char *query)
  {
      if (!m_con) {
-         printf("%s:%d: Query: %s m_con is NULL, exiting\n", __func__, __LINE__, query);
+         DB_LOG("m_con is NULL, cannot execute query");
          return NULL;
      }
 
-     if (mysql_query(m_con, query)) {
-         printf("%s:%d: Query failed: %s\n", __func__, __LINE__, query);
-         printf("%s:%d: Error: %s\n", __func__, __LINE__, mysql_error(m_con));
+     if (!query) {
+         DB_LOG("query is NULL");
          return NULL;
+     }
+
+     // Best-effort liveness check (helps identify server drop vs client crash).
+     if (mysql_ping(m_con) != 0) {
+         DB_LOG("mysql_ping failed: errno=%u err=%s", mysql_errno(m_con), mysql_error(m_con));
+     }
+
+     auto run_query_once = [&](void) -> bool {
+         if (mysql_query(m_con, query) != 0) {
+             char preview[160];
+             DB_LOG("mysql_query failed: errno=%u err=%s query_len=%zu query_prefix='%s'",
+                    mysql_errno(m_con), mysql_error(m_con), strlen(query),
+                    db_query_preview(query, preview, sizeof(preview)));
+             return false;
+         }
+         return true;
+     };
+
+     if (!run_query_once()) {
+         // Retry once if connection was lost (helps avoid transient disconnects).
+         const unsigned int err = mysql_errno(m_con);
+         if (err == 2006 /* CR_SERVER_GONE_ERROR */ || err == 2013 /* CR_SERVER_LOST */) {
+             DB_LOG("retrying once after server-lost error (%u)", err);
+             (void)mysql_ping(m_con);
+             if (!run_query_once()) {
+                 return NULL;
+             }
+         } else {
+             return NULL;
+         }
      }
 
      MYSQL_RES *result = mysql_store_result(m_con);
@@ -69,7 +117,7 @@
          if (mysql_field_count(m_con) == 0) {
              return NULL;  // Query was successful but didn't return data
          } else {
-             printf("%s:%d: Error storing result: %s\n", __func__, __LINE__, mysql_error(m_con));
+             DB_LOG("mysql_store_result failed: errno=%u err=%s", mysql_errno(m_con), mysql_error(m_con));
              return NULL;
          }
      }
@@ -179,13 +227,25 @@
      strncpy(password, tmp, sizeof(password) - 1);
      password[sizeof(password) - 1] = '\0';
 
-     printf("%s:%d: user:%s pass:%s\n", __func__, __LINE__, username, password);
+     DB_LOG("connecting to MySQL: user='%s' host='localhost' port=%d db='%s'", username, 3306, "OneWifiMesh");
 
      // Initialize MySQL connection
      m_con = mysql_init(NULL);
      if (m_con == NULL) {
-         printf("%s:%d: mysql_init() failed\n", __func__, __LINE__);
+         DB_LOG("mysql_init() failed");
          return -1;
+     }
+
+     // Connection options to reduce ambiguous disconnects and help debugging.
+     {
+         unsigned int timeout = 5;
+         (void)mysql_options(m_con, MYSQL_OPT_CONNECT_TIMEOUT, &timeout);
+         (void)mysql_options(m_con, MYSQL_OPT_READ_TIMEOUT, &timeout);
+         (void)mysql_options(m_con, MYSQL_OPT_WRITE_TIMEOUT, &timeout);
+#ifdef MYSQL_OPT_RECONNECT
+         my_bool reconnect = 1;
+         (void)mysql_options(m_con, MYSQL_OPT_RECONNECT, &reconnect);
+#endif
      }
 
      // Connect to the database
@@ -197,8 +257,7 @@
                            3306,       // Default port
                            NULL,       // Unix socket
                            0) == NULL) {
-         printf("%s:%d: mysql_real_connect() failed: %s\n", __func__, __LINE__,
-                mysql_error(m_con));
+         DB_LOG("mysql_real_connect() failed: errno=%u err=%s", mysql_errno(m_con), mysql_error(m_con));
          mysql_close(m_con);
          m_con = NULL;
          return -1;
@@ -206,8 +265,8 @@
 
      // Select the database
      if (mysql_select_db(m_con, "OneWifiMesh") != 0) {
-         printf("%s:%d: Error selecting database: %s\n", __func__, __LINE__,
-                mysql_error(m_con));
+         DB_LOG("mysql_select_db('OneWifiMesh') failed: errno=%u err=%s (db may not exist yet)",
+                mysql_errno(m_con), mysql_error(m_con));
          // Don't fail here - the database might not exist yet
      }
 
